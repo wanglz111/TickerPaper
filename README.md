@@ -2,6 +2,8 @@
 
 TickerPaper 是一个给 **Zectrix 墨水屏** 使用的桌面行情看板。它会从 **Binance 公共行情接口** 获取价格，把你关注的 USDT 交易对渲染成一张 400 x 300 的黑白图片，并推送到墨水屏指定页面上。
 
+![TickerPaper 预览图](assets/tickerpaper-preview.png)
+
 它适合放在桌面上做一个低打扰、常亮、扫一眼就够的 crypto 行情状态牌：
 
 - 显示 BTC、ETH、SOL、BNB、PENDLE 的 USDT 最新价格。
