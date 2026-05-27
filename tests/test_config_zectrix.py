@@ -20,19 +20,10 @@ class ConfigTest(unittest.TestCase):
                     {
                         "api_key": "",
                         "mac_address": "",
-                        "price_page_id": 1,
-                        "portfolio_page_id": 2,
+                        "page_id": 1,
                         "interval_seconds": 60,
                         "font_path": "font.ttf",
                         "watchlist": ["BTCUSDT", "ETHUSDT"],
-                        "positions": [
-                            {
-                                "asset": "BTC",
-                                "symbol": "BTCUSDT",
-                                "quantity": 0.5,
-                                "avg_cost": 60000,
-                            }
-                        ],
                     }
                 )
             )
@@ -40,7 +31,29 @@ class ConfigTest(unittest.TestCase):
             config = load_config(path, validate_zectrix=False)
 
         self.assertEqual(config.watchlist, ["BTCUSDT", "ETHUSDT"])
-        self.assertEqual(config.positions[0].asset, "BTC")
+        self.assertEqual(config.page_id, 1)
+
+    def test_legacy_price_page_id_is_supported(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "config.json"
+            font = Path(tmp) / "font.ttf"
+            font.write_bytes(b"fake-font")
+            path.write_text(
+                json.dumps(
+                    {
+                        "api_key": "",
+                        "mac_address": "",
+                        "price_page_id": 5,
+                        "interval_seconds": 60,
+                        "font_path": "font.ttf",
+                        "watchlist": ["BTCUSDT"],
+                    }
+                )
+            )
+
+            config = load_config(path, validate_zectrix=False)
+
+        self.assertEqual(config.page_id, 5)
 
     def test_push_config_requires_zectrix_credentials(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -52,12 +65,10 @@ class ConfigTest(unittest.TestCase):
                     {
                         "api_key": "",
                         "mac_address": "",
-                        "price_page_id": 1,
-                        "portfolio_page_id": 2,
+                        "page_id": 1,
                         "interval_seconds": 60,
                         "font_path": "font.ttf",
                         "watchlist": ["BTCUSDT"],
-                        "positions": [],
                     }
                 )
             )
@@ -100,7 +111,7 @@ class ZectrixClientTest(unittest.TestCase):
         )
         image = Image.new("1", (400, 300), color=255)
 
-        ok = client.push_image(image, page_id=2, filename="portfolio.png")
+        ok = client.push_image(image, page_id=2, filename="price.png")
 
         self.assertTrue(ok)
         call = session.calls[0]
@@ -110,7 +121,7 @@ class ZectrixClientTest(unittest.TestCase):
         )
         self.assertEqual(call["headers"], {"X-API-Key": "sec_test"})
         self.assertEqual(call["data"], {"dither": "true", "pageId": "2"})
-        self.assertEqual(call["files"]["images"][0], "portfolio.png")
+        self.assertEqual(call["files"]["images"][0], "price.png")
         self.assertEqual(call["files"]["images"][2], "image/png")
         self.assertEqual(call["timeout"], 30)
 

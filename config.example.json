@@ -1,8 +1,7 @@
 {
   "api_key": "YOUR_ZECTRIX_API_KEY",
   "mac_address": "AA:BB:CC:DD:EE:FF",
-  "price_page_id": 1,
-  "portfolio_page_id": 2,
+  "page_id": 1,
   "interval_seconds": 60,
   "font_path": "auto",
   "binance_base_url": "https://api.binance.com",
@@ -12,37 +11,5 @@
     "SOLUSDT",
     "BNBUSDT",
     "PENDLEUSDT"
-  ],
-  "positions": [
-    {
-      "asset": "BTC",
-      "symbol": "BTCUSDT",
-      "quantity": 0.75,
-      "avg_cost": 58000
-    },
-    {
-      "asset": "ETH",
-      "symbol": "ETHUSDT",
-      "quantity": 4,
-      "avg_cost": 3200
-    },
-    {
-      "asset": "SOL",
-      "symbol": "SOLUSDT",
-      "quantity": 50,
-      "avg_cost": 120
-    },
-    {
-      "asset": "BNB",
-      "symbol": "BNBUSDT",
-      "quantity": 8,
-      "avg_cost": 630
-    },
-    {
-      "asset": "PENDLE",
-      "symbol": "PENDLEUSDT",
-      "quantity": 600,
-      "avg_cost": 4.1
-    }
   ]
 }

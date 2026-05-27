@@ -3,7 +3,9 @@ __pycache__/
 *.pyc
 .pytest_cache/
 .cache/
+.codegraph/
 .superpowers/
 config.json
+preview.png
 preview-price.png
 preview-portfolio.png

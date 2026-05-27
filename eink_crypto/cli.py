@@ -7,8 +7,7 @@ from PIL import Image
 
 from .binance import BinanceClient
 from .config import ConfigError, DashboardConfig, load_config
-from .models import ConfigPosition, MarketTicker
-from .portfolio import build_portfolio
+from .models import MarketTicker
 from .render import EinkCryptoRenderer
 from .zectrix import ZectrixClient
 
@@ -20,17 +19,9 @@ def create_sample_config() -> DashboardConfig:
     return DashboardConfig(
         api_key="",
         mac_address="",
-        price_page_id=1,
-        portfolio_page_id=2,
+        page_id=1,
         interval_seconds=60,
         watchlist=DEFAULT_WATCHLIST,
-        positions=[
-            ConfigPosition("BTC", "BTCUSDT", 0.75, 58000),
-            ConfigPosition("ETH", "ETHUSDT", 4, 3200),
-            ConfigPosition("SOL", "SOLUSDT", 50, 120),
-            ConfigPosition("BNB", "BNBUSDT", 8, 630),
-            ConfigPosition("PENDLE", "PENDLEUSDT", 600, 4.1),
-        ],
         font_path=None,
     )
 
@@ -45,11 +36,11 @@ def sample_tickers() -> dict[str, MarketTicker]:
     }
 
 
-def build_images(
+def build_image(
     config: DashboardConfig,
     *,
     use_sample: bool = False,
-) -> tuple[Image.Image, Image.Image]:
+) -> Image.Image:
     if use_sample:
         tickers = sample_tickers()
     else:
@@ -57,37 +48,27 @@ def build_images(
             config.watchlist
         )
 
-    portfolio = build_portfolio(config.positions, tickers)
     renderer = EinkCryptoRenderer(config.font_path)
-    price_page = renderer.render_price_page(
+    return renderer.render_price_page(
         config.watchlist,
         tickers,
         config.interval_seconds,
     )
-    portfolio_page = renderer.render_portfolio_page(portfolio)
-    return price_page, portfolio_page
 
 
-def save_previews(price_page: Image.Image, portfolio_page: Image.Image) -> None:
-    price_page.save("preview-price.png")
-    portfolio_page.save("preview-portfolio.png")
+def save_preview(image: Image.Image) -> None:
+    image.save("preview.png")
 
 
-def push_pages(
+def push_page(
     config: DashboardConfig,
-    price_page: Image.Image,
-    portfolio_page: Image.Image,
+    image: Image.Image,
 ) -> None:
     client = ZectrixClient(config.api_key, config.mac_address)
     client.push_image(
-        price_page,
-        page_id=config.price_page_id,
+        image,
+        page_id=config.page_id,
         filename="crypto-watch.png",
-    )
-    client.push_image(
-        portfolio_page,
-        page_id=config.portfolio_page_id,
-        filename="crypto-portfolio.png",
     )
 
 
@@ -99,17 +80,14 @@ def run(
     use_sample: bool = False,
 ) -> None:
     while True:
-        price_page, portfolio_page = build_images(config, use_sample=use_sample)
+        image = build_image(config, use_sample=use_sample)
         if preview:
-            save_previews(price_page, portfolio_page)
-            print("Preview saved: preview-price.png, preview-portfolio.png")
+            save_preview(image)
+            print("Preview saved: preview.png")
             return
 
-        push_pages(config, price_page, portfolio_page)
-        print(
-            "Pushed pages "
-            f"{config.price_page_id} and {config.portfolio_page_id}"
-        )
+        push_page(config, image)
+        print(f"Pushed page {config.page_id}")
         if once:
             return
         time.sleep(config.interval_seconds)
@@ -149,4 +127,3 @@ def main(argv: list[str] | None = None) -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

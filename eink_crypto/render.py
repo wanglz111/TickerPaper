@@ -4,29 +4,11 @@ from pathlib import Path
 from PIL import Image, ImageDraw, ImageFont
 
 from .fonts import COMMON_FONT_PATHS
-from .models import MarketTicker, PortfolioView
+from .models import MarketTicker
 
 
 def _sign(value: float) -> str:
     return "+" if value >= 0 else ""
-
-
-def _compact_money(value: float) -> str:
-    abs_value = abs(value)
-    prefix = "-" if value < 0 else ""
-    if abs_value >= 1_000_000:
-        return f"{prefix}{abs_value / 1_000_000:.1f}M"
-    if abs_value >= 100_000:
-        return f"{prefix}{abs_value / 1000:.0f}k"
-    if abs_value >= 10_000:
-        return f"{prefix}{abs_value / 1000:.1f}k"
-    if abs_value >= 1000:
-        return f"{prefix}{abs_value / 1000:.1f}k"
-    if abs_value >= 100:
-        return f"{prefix}{abs_value:.0f}"
-    if abs_value >= 10:
-        return f"{prefix}{abs_value:.2f}"
-    return f"{prefix}{abs_value:.3g}"
 
 
 def _price_text(value: float) -> str:
@@ -53,11 +35,6 @@ class EinkCryptoRenderer:
         self.f_price = self._font(22)
         self.f_change = self._font(12)
         self.f_footer = self._font(12)
-        self.f_head = self._font(9)
-        self.f_row = self._font(12)
-        self.f_label = self._font(10)
-        self.f_big = self._font(24)
-        self.f_metric = self._font(11)
 
     def render_price_page(
         self,
@@ -87,31 +64,6 @@ class EinkCryptoRenderer:
     ) -> tuple[str, str]:
         timestamp = (now or datetime.now()).strftime("%H:%M")
         return f"BINANCE OK {timestamp}", f"NEXT {interval_seconds}s"
-
-    def render_portfolio_page(self, portfolio: PortfolioView) -> Image.Image:
-        img = self._new_canvas()
-        draw = ImageDraw.Draw(img)
-        self._header(draw, "CRYPTO PORTFOLIO")
-
-        self._positions_table(draw, portfolio)
-        self._summary_stack(draw, portfolio)
-
-        best = portfolio.best
-        worst = portfolio.worst
-        left = (
-            f"BEST {best.asset} {_sign(best.unrealized_pnl_percent)}"
-            f"{best.unrealized_pnl_percent:.0f}%"
-            if best
-            else "BEST --"
-        )
-        right = (
-            f"WORST {worst.asset} {_sign(worst.unrealized_pnl_percent)}"
-            f"{worst.unrealized_pnl_percent:.0f}%"
-            if worst
-            else "WORST --"
-        )
-        self._footer(draw, left, right)
-        return img
 
     def _new_canvas(self) -> Image.Image:
         return Image.new("1", (self.W, self.H), color=255)
@@ -158,98 +110,6 @@ class EinkCryptoRenderer:
         bx0, by0, bx1, by1 = 324, y + 8, 388, y + 32
         draw.rounded_rectangle([(bx0, by0), (bx1, by1)], radius=7, outline=0, fill=255, width=2)
         self._center(draw, bx0, bx1, y + 14, change, self.f_change)
-
-    def _positions_table(
-        self,
-        draw: ImageDraw.ImageDraw,
-        portfolio: PortfolioView,
-    ) -> None:
-        x = 10
-        y = self.HDR_H + 8
-        widths = [58, 66, 70, 44]
-        bounds = [x]
-        for width in widths:
-            bounds.append(bounds[-1] + width)
-
-        headers = ["COIN", "VALUE", "UPNL", "%"]
-        for i, header in enumerate(headers):
-            if i == 0:
-                draw.text((bounds[i], y), header, font=self.f_head, fill=0)
-            else:
-                self._right(draw, bounds[i + 1], y, header, self.f_head)
-        draw.line([(x, y + 14), (bounds[-1], y + 14)], fill=0, width=2)
-
-        y += 18
-        for row in portfolio.rows[:5]:
-            cells = [
-                row.asset,
-                _compact_money(row.current_value),
-                f"{_sign(row.unrealized_pnl)}{_compact_money(row.unrealized_pnl)}",
-                f"{_sign(row.unrealized_pnl_percent)}{row.unrealized_pnl_percent:.0f}",
-            ]
-            draw.text((bounds[0], y + 7), cells[0], font=self.f_row, fill=0)
-            for i in range(1, 4):
-                self._right(draw, bounds[i + 1], y + 7, cells[i], self.f_row)
-            draw.line([(x, y + 27), (bounds[-1], y + 27)], fill=0, width=1)
-            y += 28
-
-        if portfolio.best:
-            draw.text(
-                (x, y + 7),
-                f"BEST {portfolio.best.asset} {_sign(portfolio.best.unrealized_pnl_percent)}{portfolio.best.unrealized_pnl_percent:.0f}%",
-                font=self.f_metric,
-                fill=0,
-            )
-        if portfolio.worst:
-            draw.text(
-                (x, y + 24),
-                f"WORST {portfolio.worst.asset} {_sign(portfolio.worst.unrealized_pnl_percent)}{portfolio.worst.unrealized_pnl_percent:.0f}%",
-                font=self.f_metric,
-                fill=0,
-            )
-
-        draw.rectangle([(260, self.HDR_H), (262, self.H - self.FOOT_H - 1)], fill=0)
-
-    def _summary_stack(
-        self,
-        draw: ImageDraw.ImageDraw,
-        portfolio: PortfolioView,
-    ) -> None:
-        x = 272
-        y = self.HDR_H + 10
-        summary = portfolio.summary
-        self._label_big(draw, x, y, "Current Value", _compact_money(summary.current_value))
-        y += 55
-        self._label_big(
-            draw,
-            x,
-            y,
-            "Unrealized",
-            f"{_sign(summary.unrealized_pnl)}{_compact_money(summary.unrealized_pnl)}",
-        )
-        y += 61
-        metrics = [
-            ("UPNL%", f"{_sign(summary.unrealized_pnl_percent)}{summary.unrealized_pnl_percent:.1f}"),
-            ("Cost", _compact_money(summary.cost)),
-            ("Coins", str(summary.coins)),
-        ]
-        for label, value in metrics:
-            draw.text((x, y), label, font=self.f_metric, fill=0)
-            self._right(draw, self.W - 10, y, value, self.f_metric)
-            draw.line([(x, y + 16), (self.W - 10, y + 16)], fill=0, width=1)
-            y += 24
-
-    def _label_big(
-        self,
-        draw: ImageDraw.ImageDraw,
-        x: int,
-        y: int,
-        label: str,
-        value: str,
-    ) -> None:
-        draw.text((x, y), label.upper(), font=self.f_label, fill=0)
-        safe_value = self._truncate(draw, value, self.f_big, self.W - x - 10)
-        draw.text((x, y + 15), safe_value, font=self.f_big, fill=0)
 
     def _font(self, size: int) -> ImageFont.ImageFont:
         if self.font_path:
