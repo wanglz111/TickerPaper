@@ -19,8 +19,8 @@ The first page is a compact watchlist:
 - Five rows, one per coin.
 - Each row shows the coin symbol, USDT pair, last price, and 24h percentage change.
 - Footer: useful market status instead of page numbering. The approved footer pattern is:
-  - Left: `5 COINS  AVG +3.0%`
-  - Right: `REFRESH 60s`
+  - Left: `BINANCE OK 19:04`
+  - Right: `NEXT 60s`
 
 The layout uses wider row spacing and fixed columns to avoid stacked or overlapping text.
 

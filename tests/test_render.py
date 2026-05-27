@@ -1,3 +1,4 @@
+from datetime import datetime
 import unittest
 
 from eink_crypto.models import ConfigPosition, MarketTicker
@@ -6,6 +7,17 @@ from eink_crypto.render import EinkCryptoRenderer
 
 
 class RendererTest(unittest.TestCase):
+    def test_price_status_footer_uses_binance_health_and_next_refresh(self):
+        renderer = EinkCryptoRenderer(font_path=None)
+
+        left, right = renderer.price_status_footer(
+            interval_seconds=60,
+            now=datetime(2026, 5, 27, 19, 4),
+        )
+
+        self.assertEqual(left, "BINANCE OK 19:04")
+        self.assertEqual(right, "NEXT 60s")
+
     def test_renders_nonblank_1bit_pages(self):
         tickers = {
             "BTCUSDT": MarketTicker(

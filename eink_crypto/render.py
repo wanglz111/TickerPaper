@@ -74,21 +74,26 @@ class EinkCryptoRenderer:
     ) -> Image.Image:
         img = self._new_canvas()
         draw = ImageDraw.Draw(img)
-        self._header(draw, "CRYPTO WATCH")
+        now = datetime.now()
+        self._header(draw, "CRYPTO WATCH", now=now)
 
         y = self.HDR_H + 9
-        changes: list[float] = []
         for symbol in symbols[:5]:
             ticker = tickers[symbol]
-            changes.append(ticker.change_percent)
             self._market_row(draw, y, ticker)
             y += 40
 
-        avg_change = sum(changes) / len(changes) if changes else 0.0
-        left = f"{len(changes)} COINS  AVG {_sign(avg_change)}{avg_change:.1f}%"
-        right = f"REFRESH {interval_seconds}s"
+        left, right = self.price_status_footer(interval_seconds, now=now)
         self._footer(draw, left, right)
         return img
+
+    def price_status_footer(
+        self,
+        interval_seconds: int,
+        now: datetime | None = None,
+    ) -> tuple[str, str]:
+        timestamp = (now or datetime.now()).strftime("%H:%M")
+        return f"BINANCE OK {timestamp}", f"NEXT {interval_seconds}s"
 
     def render_portfolio_page(self, portfolio: PortfolioView) -> Image.Image:
         img = self._new_canvas()
@@ -118,11 +123,17 @@ class EinkCryptoRenderer:
     def _new_canvas(self) -> Image.Image:
         return Image.new("1", (self.W, self.H), color=255)
 
-    def _header(self, draw: ImageDraw.ImageDraw, title: str) -> None:
+    def _header(
+        self,
+        draw: ImageDraw.ImageDraw,
+        title: str,
+        *,
+        now: datetime | None = None,
+    ) -> None:
         draw.rectangle([(0, 0), (self.W - 1, self.HDR_H - 1)], fill=0)
         draw.text((12, 10), title, font=self.f_hdr, fill=255)
-        now = datetime.now().strftime("%H:%M")
-        self._right(draw, self.W - 12, 10, now, self.f_hdr, fill=255)
+        time_text = (now or datetime.now()).strftime("%H:%M")
+        self._right(draw, self.W - 12, 10, time_text, self.f_hdr, fill=255)
 
     def _footer(self, draw: ImageDraw.ImageDraw, left: str, right: str) -> None:
         y0 = self.H - self.FOOT_H
