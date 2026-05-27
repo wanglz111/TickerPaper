@@ -94,7 +94,7 @@ def run(
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Crypto e-ink dashboard")
+    parser = argparse.ArgumentParser(description="TickerPaper e-ink market dashboard")
     parser.add_argument("--config", default="config.json", help="Path to config JSON")
     parser.add_argument("--preview", action="store_true", help="Render PNG previews only")
     parser.add_argument("--once", action="store_true", help="Push once and exit")

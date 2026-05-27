@@ -1,2 +1,1 @@
-"""Crypto e-ink dashboard package."""
-
+"""TickerPaper e-ink market dashboard package."""
