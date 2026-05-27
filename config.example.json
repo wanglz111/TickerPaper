@@ -4,7 +4,7 @@
   "price_page_id": 1,
   "portfolio_page_id": 2,
   "interval_seconds": 60,
-  "font_path": "/Users/edy/Library/Fonts/CascadiaMono.ttf",
+  "font_path": "auto",
   "binance_base_url": "https://api.binance.com",
   "watchlist": [
     "BTCUSDT",
@@ -46,4 +46,3 @@
     }
   ]
 }
-

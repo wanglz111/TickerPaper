@@ -3,15 +3,8 @@ from pathlib import Path
 
 from PIL import Image, ImageDraw, ImageFont
 
+from .fonts import COMMON_FONT_PATHS
 from .models import MarketTicker, PortfolioView
-
-
-COMMON_FONT_PATHS = [
-    Path.home() / "Library" / "Fonts" / "CascadiaMono.ttf",
-    Path("/System/Library/Fonts/SFNSRounded.ttf"),
-    Path("/System/Library/Fonts/SFCompactRounded.ttf"),
-    Path("/System/Library/Fonts/SFNSMono.ttf"),
-]
 
 
 def _sign(value: float) -> str:

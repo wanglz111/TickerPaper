@@ -56,7 +56,7 @@ The local machine has:
 /Users/edy/Library/Fonts/CascadiaMono.ttf
 ```
 
-The renderer should prefer the configured `font_path`, then this local Cascadia font, then macOS rounded/system fonts, then Pillow's default font. The target visual style is rounder and softer than a hard terminal bitmap font, while still keeping numeric columns aligned.
+The renderer should support `font_path: "auto"` for portable installs. In auto mode it should reuse `.cache/fonts/CascadiaCode.ttf` when present, otherwise use a common local Cascadia/macOS font when available, otherwise download Microsoft Cascadia Code from the official GitHub release into `.cache/fonts/`. The target visual style is rounder and softer than a hard terminal bitmap font, while still keeping numeric columns aligned.
 
 ## Data Sources
 

@@ -2,8 +2,8 @@ import json
 from dataclasses import dataclass
 from pathlib import Path
 
+from .fonts import ensure_font_path
 from .models import ConfigPosition
-from .render import COMMON_FONT_PATHS
 
 
 class ConfigError(ValueError):
@@ -43,7 +43,7 @@ def load_config(
     interval_seconds = _int_field(raw, "interval_seconds", 60)
     watchlist = [str(symbol).upper() for symbol in raw.get("watchlist", [])]
     positions = [_position(item) for item in raw.get("positions", [])]
-    font_path = _resolve_font_path(raw.get("font_path"), config_path.parent)
+    font_path = ensure_font_path(raw.get("font_path", "auto"), config_path.parent)
     binance_base_url = str(raw.get("binance_base_url", "https://api.binance.com"))
 
     if not watchlist:
@@ -94,18 +94,4 @@ def _position(raw: dict) -> ConfigPosition:
         raise ConfigError(f"Position is missing field: {exc.args[0]}") from exc
     except (TypeError, ValueError) as exc:
         raise ConfigError("Position quantity and avg_cost must be numbers") from exc
-
-
-def _resolve_font_path(raw_font_path: str | None, base_dir: Path) -> Path | None:
-    candidates: list[Path] = []
-    if raw_font_path:
-        configured = Path(str(raw_font_path)).expanduser()
-        if not configured.is_absolute():
-            configured = base_dir / configured
-        candidates.append(configured)
-    candidates.extend(COMMON_FONT_PATHS)
-    for candidate in candidates:
-        if candidate.exists():
-            return candidate
-    return None
 

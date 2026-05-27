@@ -13,6 +13,8 @@ class ConfigTest(unittest.TestCase):
     def test_preview_config_does_not_require_zectrix_credentials(self):
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "config.json"
+            font = Path(tmp) / "font.ttf"
+            font.write_bytes(b"fake-font")
             path.write_text(
                 json.dumps(
                     {
@@ -21,6 +23,7 @@ class ConfigTest(unittest.TestCase):
                         "price_page_id": 1,
                         "portfolio_page_id": 2,
                         "interval_seconds": 60,
+                        "font_path": "font.ttf",
                         "watchlist": ["BTCUSDT", "ETHUSDT"],
                         "positions": [
                             {
@@ -42,6 +45,8 @@ class ConfigTest(unittest.TestCase):
     def test_push_config_requires_zectrix_credentials(self):
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "config.json"
+            font = Path(tmp) / "font.ttf"
+            font.write_bytes(b"fake-font")
             path.write_text(
                 json.dumps(
                     {
@@ -50,6 +55,7 @@ class ConfigTest(unittest.TestCase):
                         "price_page_id": 1,
                         "portfolio_page_id": 2,
                         "interval_seconds": 60,
+                        "font_path": "font.ttf",
                         "watchlist": ["BTCUSDT"],
                         "positions": [],
                     }

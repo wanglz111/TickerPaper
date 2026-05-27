@@ -20,6 +20,7 @@
 - Create `eink_crypto/render.py`: two-page 400 x 300 monochrome renderer.
 - Create `eink_crypto/zectrix.py`: Zectrix PNG push client.
 - Create `eink_crypto/config.py`: config loading, validation, and font path resolution.
+- Create `eink_crypto/fonts.py`: portable `font_path: "auto"` font resolution and Cascadia Code download cache.
 - Create `eink_crypto/cli.py`: preview, once, and continuous loop behavior.
 - Create `tests/test_binance.py`: Binance request and parsing tests.
 - Create `tests/test_portfolio.py`: portfolio math tests.
@@ -263,7 +264,7 @@ Expected: one passing test.
 
 - [ ] **Step 1: Implement config loading**
 
-`config.py` should load `config.json`, validate Zectrix fields only when pushing, parse positions into `ConfigPosition`, and resolve the font path from configured path, local Cascadia font, macOS rounded fonts, or `None`.
+`config.py` should load `config.json`, validate Zectrix fields only when pushing, parse positions into `ConfigPosition`, and resolve the font path from configured path, `font_path: "auto"`, local Cascadia/macOS fonts, or the downloaded `.cache/fonts/CascadiaCode.ttf` cache.
 
 - [ ] **Step 2: Implement Zectrix push**
 

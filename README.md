@@ -22,6 +22,7 @@ Edit `config.json`:
 - `mac_address`: Zectrix device MAC address.
 - `price_page_id`: page for the price preview.
 - `portfolio_page_id`: page for the portfolio preview.
+- `font_path`: keep as `auto` to use a local font when available or download Cascadia Code into `.cache/fonts/`.
 - `positions`: local holdings with coin quantity and average cost in USDT.
 
 ## Preview
