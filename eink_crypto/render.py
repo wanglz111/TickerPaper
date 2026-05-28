@@ -31,7 +31,6 @@ class EinkCryptoRenderer:
         self.font_path = self._resolve_font_path(font_path)
         self.f_hdr = self._font(14)
         self.f_sym = self._font(17)
-        self.f_sub = self._font(9)
         self.f_price = self._font(22)
         self.f_change = self._font(12)
         self.f_footer = self._font(12)
@@ -100,8 +99,10 @@ class EinkCryptoRenderer:
         draw.line([(x0, y + 39), (x1, y + 39)], fill=0, width=1)
 
         asset = ticker.symbol.removesuffix("USDT")
-        draw.text((x0, y + 6), asset, font=self.f_sym, fill=0)
-        draw.text((x0, y + 24), ticker.symbol, font=self.f_sub, fill=0)
+        asset_bbox = draw.textbbox((0, 0), asset, font=self.f_sym)
+        asset_h = asset_bbox[3] - asset_bbox[1]
+        asset_y = y + (39 - asset_h) // 2 - asset_bbox[1]
+        draw.text((x0, asset_y), asset, font=self.f_sym, fill=0)
 
         price = _price_text(ticker.last_price)
         self._right(draw, 310, y + 8, price, self.f_price)
