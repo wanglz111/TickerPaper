@@ -26,14 +26,23 @@ class EinkCryptoRenderer:
     H = 300
     HDR_H = 34
     FOOT_H = 28
+    HDR_FONT_SIZE = 14
+    HDR_TIME_FONT_SIZE = 16
+    SYM_FONT_SIZE = 24
+    SYM_FONT_WEIGHT = "Bold"
+    PRICE_FONT_SIZE = 24
+    PRICE_RIGHT_X = 290
+    CHANGE_FONT_SIZE = 13
+    FOOTER_FONT_SIZE = 14
 
     def __init__(self, font_path: str | None):
         self.font_path = self._resolve_font_path(font_path)
-        self.f_hdr = self._font(14)
-        self.f_sym = self._font(17)
-        self.f_price = self._font(22)
-        self.f_change = self._font(12)
-        self.f_footer = self._font(12)
+        self.f_hdr = self._font(self.HDR_FONT_SIZE)
+        self.f_hdr_time = self._font(self.HDR_TIME_FONT_SIZE)
+        self.f_sym = self._font(self.SYM_FONT_SIZE, variation=self.SYM_FONT_WEIGHT)
+        self.f_price = self._font(self.PRICE_FONT_SIZE)
+        self.f_change = self._font(self.CHANGE_FONT_SIZE)
+        self.f_footer = self._font(self.FOOTER_FONT_SIZE)
 
     def render_price_page(
         self,
@@ -44,13 +53,16 @@ class EinkCryptoRenderer:
         img = self._new_canvas()
         draw = ImageDraw.Draw(img)
         now = datetime.now()
-        self._header(draw, "CRYPTO WATCH", now=now)
+        self._header(draw, now=now)
 
-        y = self.HDR_H + 9
-        for symbol in symbols[:5]:
+        row_area_h = self.H - self.FOOT_H - self.HDR_H
+        visible_symbols = symbols[:5]
+        for index, symbol in enumerate(visible_symbols):
             ticker = tickers[symbol]
-            self._market_row(draw, y, ticker)
-            y += 40
+            y0 = self.HDR_H + (row_area_h * index) // len(visible_symbols)
+            y1 = self.HDR_H + (row_area_h * (index + 1)) // len(visible_symbols) - 1
+            has_divider = index < len(visible_symbols) - 1
+            self._market_row(draw, y0, y1, ticker, has_divider=has_divider)
 
         left, right = self.price_status_footer(interval_seconds, now=now)
         self._footer(draw, left, right)
@@ -61,8 +73,7 @@ class EinkCryptoRenderer:
         interval_seconds: int,
         now: datetime | None = None,
     ) -> tuple[str, str]:
-        timestamp = (now or datetime.now()).strftime("%H:%M")
-        return f"BINANCE OK {timestamp}", f"NEXT {interval_seconds}s"
+        return "BINANCE", f"REFRESH {interval_seconds}s"
 
     def _new_canvas(self) -> Image.Image:
         return Image.new("1", (self.W, self.H), color=255)
@@ -70,19 +81,22 @@ class EinkCryptoRenderer:
     def _header(
         self,
         draw: ImageDraw.ImageDraw,
-        title: str,
         *,
         now: datetime | None = None,
     ) -> None:
-        draw.rectangle([(0, 0), (self.W - 1, self.HDR_H - 1)], fill=0)
-        draw.text((12, 10), title, font=self.f_hdr, fill=255)
+        draw.rectangle([(0, self.HDR_H - 3), (self.W - 1, self.HDR_H - 1)], fill=0)
         time_text = (now or datetime.now()).strftime("%H:%M")
-        self._right(draw, self.W - 12, 10, time_text, self.f_hdr, fill=255)
+        time_bbox = draw.textbbox((0, 0), time_text, font=self.f_hdr_time)
+        time_h = time_bbox[3] - time_bbox[1]
+        time_y = (self.HDR_H - 3 - time_h) // 2 - time_bbox[1]
+        self._right(draw, self.W - 12, time_y, time_text, self.f_hdr_time)
 
     def _footer(self, draw: ImageDraw.ImageDraw, left: str, right: str) -> None:
         y0 = self.H - self.FOOT_H
         draw.rectangle([(0, y0), (self.W - 1, y0 + 2)], fill=0)
-        y = y0 + 9
+        footer_bbox = draw.textbbox((0, 0), left, font=self.f_footer)
+        footer_h = footer_bbox[3] - footer_bbox[1]
+        y = y0 + 3 + (self.FOOT_H - 3 - footer_h) // 2 - footer_bbox[1]
         right_w = self._tw(draw, right, self.f_footer)
         max_left_w = self.W - 24 - right_w - 8
         draw.text((12, y), self._truncate(draw, left, self.f_footer, max_left_w), font=self.f_footer, fill=0)
@@ -91,31 +105,50 @@ class EinkCryptoRenderer:
     def _market_row(
         self,
         draw: ImageDraw.ImageDraw,
-        y: int,
+        y0: int,
+        y1: int,
         ticker: MarketTicker,
+        *,
+        has_divider: bool = True,
     ) -> None:
         x0 = 12
         x1 = self.W - 12
-        draw.line([(x0, y + 39), (x1, y + 39)], fill=0, width=1)
+        if has_divider:
+            draw.line([(x0, y1), (x1, y1)], fill=0, width=1)
 
         asset = ticker.symbol.removesuffix("USDT")
         asset_bbox = draw.textbbox((0, 0), asset, font=self.f_sym)
         asset_h = asset_bbox[3] - asset_bbox[1]
-        asset_y = y + (39 - asset_h) // 2 - asset_bbox[1]
+        row_h = y1 - y0
+        asset_y = y0 + (row_h - asset_h) // 2 - asset_bbox[1]
         draw.text((x0, asset_y), asset, font=self.f_sym, fill=0)
 
         price = _price_text(ticker.last_price)
-        self._right(draw, 310, y + 8, price, self.f_price)
+        price_bbox = draw.textbbox((0, 0), price, font=self.f_price)
+        price_h = price_bbox[3] - price_bbox[1]
+        price_y = y0 + (row_h - price_h) // 2 - price_bbox[1]
+        self._right(draw, self.PRICE_RIGHT_X, price_y, price, self.f_price)
 
         change = f"{_sign(ticker.change_percent)}{ticker.change_percent:.1f}%"
-        bx0, by0, bx1, by1 = 324, y + 8, 388, y + 32
+        badge_h = 24
+        by0 = y0 + (row_h - badge_h) // 2
+        bx0, bx1, by1 = 324, 388, by0 + badge_h
         draw.rounded_rectangle([(bx0, by0), (bx1, by1)], radius=7, outline=0, fill=255, width=2)
-        self._center(draw, bx0, bx1, y + 14, change, self.f_change)
+        change_bbox = draw.textbbox((0, 0), change, font=self.f_change)
+        change_h = change_bbox[3] - change_bbox[1]
+        change_y = by0 + (badge_h - change_h) // 2 - change_bbox[1]
+        self._center(draw, bx0, bx1, change_y, change, self.f_change)
 
-    def _font(self, size: int) -> ImageFont.ImageFont:
+    def _font(self, size: int, *, variation: str | None = None) -> ImageFont.ImageFont:
         if self.font_path:
             try:
-                return ImageFont.truetype(str(self.font_path), size)
+                font = ImageFont.truetype(str(self.font_path), size)
+                if variation and hasattr(font, "set_variation_by_name"):
+                    try:
+                        font.set_variation_by_name(variation)
+                    except OSError:
+                        pass
+                return font
             except OSError:
                 pass
         return ImageFont.load_default()
